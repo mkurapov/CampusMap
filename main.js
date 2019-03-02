@@ -2,48 +2,48 @@ const buildingArray = [
     'AA',
     'AB',
     'AU',
-    // 'BS',
-    // 'CC',
-    // 'CCIT',
-    // 'CD',
-    // 'CH',
-    // 'CHCP',
-    // 'CR',
-    // 'DC',
-    // 'ED',
-    // 'EEEL',
-    // 'EN',
-    // 'ES',
-    // 'GL',
-    // 'ICT',
-    // 'IH',
-    // 'KA',
-    // 'KNA',
-    // 'KNB',
-    // 'MFH',
-    // 'MH',
-    // 'MLB',
-    // 'MLT',
+    'BS',
+    'CC',
+    'CCIT',
+    'CD',
+    'CH',
+    'CHCP',
+    'CR',
+    'DC',
+    'ED',
+    'EEEL',
+    'EN',
+    'ES',
+    'GL',
+    'ICT',
+    'IH',
+    'KA',
+    'KNA',
+    'KNB',
+    'MFH',
+    'MH',
+    'MLB',
+    'MLT',
     'MS',
-    // 'MSC',
-    // 'OL',
-    // 'OO',
-    // 'PF',
-    // 'RC',
-    // 'RT',
-    // 'RU',
-    // 'SA',
-    // 'SB',
-    // 'SH',
-    // 'SS',
-    // 'ST',
-    // 'TFDL',
-    // 'TI',
-    // 'YA'
+    'MSC',
+    'OL',
+    'OO',
+    'PF',
+    'RC',
+    'RT',
+    'RU',
+    'SA',
+    'SB',
+    'SH',
+    'SS',
+    'ST',
+    'TFDL',
+    'TI',
+    'YA'
     ];
 
 const svg = d3.select("svg");
-d3.csv('data/paths.csv').then(pathData => { 
+d3.csv('data/paths-test.csv').then(pathData => { 
     displayBuildings();
 
     const pathIds = pathData.map(row => row.Path_ID);
@@ -56,9 +56,7 @@ function displayBuildings() {
 
     buildings
         .merge(buildings)
-        .attr('fill', 'none')
-        .attr('stroke', 'black')
-        .attr('stroke-width', '3px')
+        .attr('class', 'building')
         .attr('id', d => {
             // console.log(d);
             return d;
@@ -87,11 +85,30 @@ function displayPath(pathId, pathData) {
                  .y(function(d) { return longToY(d['Lon']); });
    
 
-    svg.append("path")
+                 
+    const path = svg.append("path")
         .datum(pathData) // 10. Binds data to the line 
         .attr("class", "line") // Assign a class for styling 
         .attr("stroke", getRandomColor()) // Assign a class for styling 
         .attr("d", generatePath)
+
+    // var totalLength = path.node().getTotalLength();
+
+    //     path
+    //       .attr("stroke-dasharray", totalLength + " " + totalLength)
+    //       .attr("stroke-dashoffset", totalLength)
+    //       .transition()
+    //         .duration(2000)
+    //         .ease("linear")
+    //         .attr("stroke-dashoffset", 0);
+    
+    //     svg.on("click", function(){
+    //       path      
+    //         .transition()
+    //         .duration(2000)
+    //         .ease("linear")
+    //         .attr("stroke-dashoffset", totalLength);
+    //     })
 }
 
 
@@ -110,10 +127,7 @@ function latToX(lat) {
 
 
 function longToY(long) {
-    console.log(long);
     long = (+long).toFixed(4);
-    console.log(long);
-
     const magicNumber = 1029;
     const sub = long.substring(5, long.length);
     return sub - magicNumber;
