@@ -1,53 +1,13 @@
 const buildingArray = [
-    'AA',
-    'AB',
-    'AU',
-    'BS',
-    'CC',
-    'CCIT',
-    'CD',
-    'CH',
-    'CHCP',
-    'CR',
-    'DC',
-    'ED',
-    'EEEL',
-    'EN',
-    'ES',
-    'GL',
-    'ICT',
-    'IH',
-    'KA',
-    'KNA',
-    'KNB',
-    'MFH',
-    'MH',
-    'MLB',
-    'MLT',
-    'MS',
-    'MSC',
-    'OL',
-    'OO',
-    'PF',
-    'RC',
-    'RT',
-    'RU',
-    'SA',
-    'SB',
-    'SH',
-    'SS',
-    'ST',
-    'TFDL',
-    'TI',
-    'YA'
-    ];
+    'AA','AB','AU','BS','CC','CCIT','CD','CH','CHCP','CR','DC','ED','EEEL','EN','ES','GL','ICT','IH','KA','KNA','KNB','MFH','MH','MLB','MLT','MS','MSC','OL','OO','PF','RC','RT','RU','SA','SB','SH','SS','ST','TFDL','TI','YA' ];
 
 const svg = d3.select("svg");
-d3.csv('data/paths-test.csv').then(pathData => { 
+d3.csv('data/paths-2013.csv').then(pathData => { 
     displayBuildings();
+    
 
     const pathIds = pathData.map(row => row.Path_ID);
-    pathIds.forEach(id => displayPath(id, pathData));
+    pathIds.forEach(id => displayPath(id, pathData.filter(row => row.Path_ID == id)));
 });
 
 function displayBuildings() {
@@ -57,66 +17,33 @@ function displayBuildings() {
     buildings
         .merge(buildings)
         .attr('class', 'building')
-        .attr('id', d => {
-            // console.log(d);
-            return d;
+        .attr('id', d => d)
+        .on('mouseover', function() {
+            // console.log(d3.select(this).attr('id'))
         });
 }
 
+const generatePath = d3.line()
+    .x(function(d) { return latToX(d.Lat); })
+    .y(function(d) { return longToY(d.Lon); });
 
-function displayPath(pathId, pathData) {
-
-    pathData = pathData.filter(row => row.Path_ID == pathId);
-    // console.log(pathId);
-
-    
-
-    // const paths = svg.selectAll('circle')
-    //     .data(pathData)
-    //     .enter().append('circle')
-    //     .attr("r", 3)
-    //     .attr("cx", d => latToX(d.Lat))
-    //     .attr("cy", d => longToY(d.Lon))
-
-    // 7. d3's line generator
-
-    const generatePath = d3.line()
-                 .x(function(d) { return latToX(d['Lat']); })
-                 .y(function(d) { return longToY(d['Lon']); });
-   
-
-                 
+function displayPath(pathId, pathData) {   
     const path = svg.append("path")
-        .datum(pathData) // 10. Binds data to the line 
-        .attr("class", "line") // Assign a class for styling 
-        .attr("stroke", getRandomColor()) // Assign a class for styling 
+    .datum(pathData)
+    .attr("class", "line") 
+        .attr("stroke", getRandomColor()) 
         .attr("d", generatePath)
 
-    // var totalLength = path.node().getTotalLength();
+    const totalLength = path.node().getTotalLength();
 
-    //     path
-    //       .attr("stroke-dasharray", totalLength + " " + totalLength)
-    //       .attr("stroke-dashoffset", totalLength)
-    //       .transition()
-    //         .duration(2000)
-    //         .ease("linear")
-    //         .attr("stroke-dashoffset", 0);
-    
-    //     svg.on("click", function(){
-    //       path      
-    //         .transition()
-    //         .duration(2000)
-    //         .ease("linear")
-    //         .attr("stroke-dashoffset", totalLength);
-    //     })
+    path
+    .attr("stroke-dasharray", totalLength + " " + totalLength)
+    .attr("stroke-dashoffset", totalLength)
+    .transition()
+        .duration(3000)
+        // .ease("linear")
+        .attr("stroke-dashoffset", 0);
 }
-
-
-// function generatePath(row) {
-//     console.log(row);
-//     return  // apply smoothing to the line
-// }
-
 
 function latToX(lat) {
     lat = (+lat).toFixed(5);
@@ -136,19 +63,3 @@ function longToY(long) {
 function getRandomColor() {
     return "#"+((1<<24)*Math.random()|0).toString(16)
   }
-  
-
-// buildings.forEach(b => {
-//     // console.log(b);
-//     // d3.request(`/data/shapeFiles/${b}.svg`)
-//     // .mimeType("image/svg+xml")
-//     // // .response(responseCallback)
-//     // .get();
-
-//     d3.svg(`data/shapeFiles/${b}.svg`).then(buil => {
-//         console.log(buil);
-
-//         // svg.appendChild(node);
-//         // console.log(node);
-//     });
-// });
