@@ -1,0 +1,4 @@
+﻿Path_ID,Path_Point_ID,Loct,Academic_Day,Building_ID,Building_Name,Lat,Lon,Distance_To_Next,Minutes_To_Next,Max_Temp_C,Mean_Temp_C,Total_Precip_mm,Snow_cm,Azimuth_Path,Azimuth_Segment,Speed
+0,0,31-10-2012 15:26,FALL_TERM_1,ES,Earth Sciences,51.07992,-114.1294,140.1548992,5.033333333,-3.7,-5.4,0.6,0,85.44953289,85.44953289,27.84534421
+1,3,23-01-2014 7:14,WINTERTERM_1,YA,Yamnuska Hall,51.0753,-114.1378,30.96765811,4.75,8.8,1.7,0,6,0,244.4764842,6.519506971
+2252,4,28-03-2016 18:56,WINTERTERM_2,CHF,Craigie Hall Block F,51.07682,-114.1306,0,0,10.3,5.7,0,0,259.2156051,0,0
