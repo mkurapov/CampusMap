@@ -4,9 +4,9 @@ const height = 1152;
 const svg = d3.select("svg");
 
 var projection = d3.geoMercator()
-  .scale(5800000)
+  .scale(5580000)
   .center([-114.130583, 51.077945])
-  .translate([890, 540]);
+  .translate([885, 580]);
 
 const path = d3.geoPath()
     .projection(projection);
@@ -14,33 +14,42 @@ const path = d3.geoPath()
 const buildingArray = [
     'AA','AB','AU','BS','CC','CCIT','CD','CH','CHCP','CR','DC','ED','EEEL','EN','ES','GL','ICT','IH','KA','KNA','KNB','MFH','MH','MLB','MLT','MS','MSC','OL','OO','PF','RC','RT','RU','SA','SB','SH','SS','ST','TFDL','TI','YA' ];
     
-d3.csv('data/paths-2013.csv').then(pathData => { 
+d3.csv('data/paths-year/paths-2014.csv').then(pathData => { 
     displayBuildings();
-    setTimeout(() => drawPaths(pathData), 1000);
+    massageData(pathData);
+    // setTimeout(() => drawPaths(pathData), 1000);
 });
 
-function drawPaths(pathData) {
+function massageData(pathData) {
+    const cleanData = [];
+
     const curId = pathData[0].Path_ID;
     let reducer = {
         id: curId,
-        coords: []
+        coords: [],
+        startTime: '',
+        endTime: ''
     };
 
     pathData.forEach((row, i) => { 
-        console.log('row number:', i);
-        if (row.Path_ID != reducer.id) {
-            displayPath(reducer);
-            
+        if (row.Path_ID != reducer.id || pathData.length - 1 == i) {
+            cleanData.push(reducer);
             reducer = {
                 id: row.Path_ID,
-                coords: []
+                coords: [],
+                startTime: '',
+                endTime: ''
             };
         }
+
         reducer.coords.push({
             x: projection([row.Lon,row.Lat])[0],
             y: projection([row.Lon,row.Lat])[1],
         });
+        
     });
+
+    console.log(cleanData);
 }
 
 function displayBuildings() {
@@ -63,7 +72,7 @@ const generatePath = d3.line()
 
 function displayPath(pathData) {   
     const coords = pathData.coords;
-    // console.log(coords);
+    console.log(coords);
     const randCol = getRandomColor();
 
     svg.selectAll('circle')

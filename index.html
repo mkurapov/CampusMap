@@ -14,15 +14,21 @@
         .line {
             fill: none;
             stroke-width: 2px;
+			z-index: 0;
         }
         svg {
             background-color: rgb(242, 244, 245);
+			transform: translateX(-160px) translateY(-103px);
         }
         .building {
-            fill: rgb(250, 246, 239);
+            /* fill: #89aeed; */
             stroke: rgb(211, 207, 207);
             stroke-width: 2px;
         }
+
+		.building:hover {
+			z-index: 99;
+		}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.8.0/d3.min.js" type="text/javascript"></script>
 
