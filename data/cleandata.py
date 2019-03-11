@@ -14,17 +14,16 @@ def resetPath(path):
     }
 
 
-def printData():
-    # print(datetime.time(cleanData[1]['startTime']))
-    print(cleanData)
-
+def dump():
+    with open('data/paths.json', 'w') as fp:
+        json.dump(cleanData, fp)
 
 def sortByTime():
     cleanData.sort(key=lambda x: x['startTime'])
     # cleanData = p=cleanDatap[]
-    # newData = sorted(cleanData, key=lambda p: p['startTime'], reverse=True)
-    dog = map(lambda x: x['startTime'], cleanData)
-    print(list(dog))
+    for index, row in enumerate(cleanData):
+        row['startTime'] = row['startTime'].strftime("%H:%M")
+    
 
 def massageDate(rowDate):
     # string = '31-10-2012 4:31'
@@ -42,7 +41,7 @@ def run():
         currentPath = {
             'id': -1,
             # 'startTime':{}
-            # 'coords':[],
+            'coords':[],
             # 'startTime':'',
             # 'endTime':''
         }
@@ -61,18 +60,17 @@ def run():
 
             # previousTime = row['Loct']
 
-            # coords = {
-            #     'lat': row['Lat'],
-            #     'lon': row['Lon']
-            # }    
+            coords = {
+                'lat': row['Lat'],
+                'lon': row['Lon']
+            }    
         
-            # currentPath['coords'].append(coords)
+            currentPath['coords'].append(coords)
         cleanData.pop(0)
 
 
-    
 
 
 run()
 sortByTime()
-
+dump()

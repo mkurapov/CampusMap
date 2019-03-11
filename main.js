@@ -14,7 +14,7 @@ const path = d3.geoPath()
 const buildingArray = [
     'AA','AB','AU','BS','CC','CCIT','CD','CH','CHCP','CR','DC','ED','EEEL','EN','ES','GL','ICT','IH','KA','KNA','KNB','MFH','MH','MLB','MLT','MS','MSC','OL','OO','PF','RC','RT','RU','SA','SB','SH','SS','ST','TFDL','TI','YA' ];
     
-d3.csv('data/paths-year/paths-2014.csv').then(pathData => { 
+d3.json('data/paths.json').then(pathData => { 
     displayBuildings();
     massageData(pathData);
     // setTimeout(() => drawPaths(pathData), 1000);
