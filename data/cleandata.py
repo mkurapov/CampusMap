@@ -4,6 +4,12 @@ from datetime import datetime
 
 cleanData = []
 
+def massageDate(rowDate):
+    # string = '31-10-2012 4:31'
+    dt = datetime.strptime(rowDate, '%d-%m-%Y %H:%M')
+    dt = dt.replace(month=1, day=1, year=1900)
+    # return dt.strftime("%H:%M")
+    return dt
 
 def resetPath(path):
     return {
@@ -13,64 +19,48 @@ def resetPath(path):
         # 'endTime':''
     }
 
+with open('data/paths-full.csv', newline='') as csvfile:
+    rows = csv.DictReader(csvfile)
+    
 
-def dump():
-    with open('data/paths.json', 'w') as fp:
-        json.dump(cleanData, fp)
+    currentPath = {
+        'id': -1,
+        # 'startTime':{}
+        'coords':[],
+        # 'startTime':'',
+        # 'endTime':''
+    }
 
-def sortByTime():
+    # previousTime = ''
+
+    for index, row in enumerate(rows):
+        rowId = row['Path_ID']
+
+        if (rowId != currentPath['id']):
+            # currentPath['endTime'] = previousTime
+            cleanData.append(currentPath)
+            currentPath = resetPath(currentPath)
+            currentPath['id'] = rowId
+            currentPath['startTime'] = massageDate(row['Loct'])
+
+        # previousTime = row['Loct']
+
+        coords = [
+            float(row['Lon']), float(row['Lat'])
+        ]    
+    
+        currentPath['coords'].append(coords)
+    
+    cleanData.pop(0)
     cleanData.sort(key=lambda x: x['startTime'])
+
+    
     # cleanData = p=cleanDatap[]
     for index, row in enumerate(cleanData):
         row['startTime'] = row['startTime'].strftime("%H:%M")
-    
 
-def massageDate(rowDate):
-    # string = '31-10-2012 4:31'
-    dt = datetime.strptime(rowDate, '%d-%m-%Y %H:%M')
-    dt = dt.replace(month=1, day=1, year=1900)
-    # return dt.strftime("%H:%M")
-    return dt
-
-
-def run():
-    with open('data/paths-full.csv', newline='') as csvfile:
-        rows = csv.DictReader(csvfile)
-        
-
-        currentPath = {
-            'id': -1,
-            # 'startTime':{}
-            'coords':[],
-            # 'startTime':'',
-            # 'endTime':''
+    with open('data/paths.json', 'w') as fp:
+        datadump = {
+            "data": cleanData
         }
-
-        # previousTime = ''
-
-        for index, row in enumerate(rows):
-            rowId = row['Path_ID']
-
-            if (rowId != currentPath['id']):
-                # currentPath['endTime'] = previousTime
-                cleanData.append(currentPath)
-                currentPath = resetPath(currentPath)
-                currentPath['id'] = rowId
-                currentPath['startTime'] = massageDate(row['Loct'])
-
-            # previousTime = row['Loct']
-
-            coords = {
-                'lat': row['Lat'],
-                'lon': row['Lon']
-            }    
-        
-            currentPath['coords'].append(coords)
-        cleanData.pop(0)
-
-
-
-
-run()
-sortByTime()
-dump()
+        json.dump(datadump, fp)

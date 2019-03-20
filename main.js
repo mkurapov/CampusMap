@@ -1,108 +1,101 @@
-const width = 1728;
-const height = 1152;
+mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4NWVoeGt5ZiJ9.IdfRD2MhG562b2oct7daNw';
 
-const svg = d3.select("svg");
-
-var projection = d3.geoMercator()
-  .scale(5580000)
-  .center([-114.130583, 51.077945])
-  .translate([885, 580]);
-
-const path = d3.geoPath()
-    .projection(projection);
-
-const buildingArray = [
-    'AA','AB','AU','BS','CC','CCIT','CD','CH','CHCP','CR','DC','ED','EEEL','EN','ES','GL','ICT','IH','KA','KNA','KNB','MFH','MH','MLB','MLT','MS','MSC','OL','OO','PF','RC','RT','RU','SA','SB','SH','SS','ST','TFDL','TI','YA' ];
-    
-d3.json('data/paths.json').then(pathData => { 
-    displayBuildings();
-    massageData(pathData);
-    // setTimeout(() => drawPaths(pathData), 1000);
+const map = new mapboxgl.Map({
+    style: 'mapbox://styles/mapbox/light-v10',
+    center: [-114.130099, 51.077311],
+    zoom: 15.5,
+    // pitch: 45,
+    // bearing: -17.6,
+    container: 'map'
 });
 
-function massageData(pathData) {
-    const cleanData = [];
+let speedFactor = 30; // number of frames per longitude degree
+let animation; // to store and cancel the animation
+let startTime = 0;
+let progress = 0; // progress = timestamp - startTime
 
-    const curId = pathData[0].Path_ID;
-    let reducer = {
-        id: curId,
-        coords: [],
-        startTime: '',
-        endTime: ''
-    };
 
-    pathData.forEach((row, i) => { 
-        if (row.Path_ID != reducer.id || pathData.length - 1 == i) {
-            cleanData.push(reducer);
-            reducer = {
-                id: row.Path_ID,
-                coords: [],
-                startTime: '',
-                endTime: ''
-            };
-        }
+function animateLine(timestamp) {
+    if (resetTime) {
+    // resume previous progress
+        startTime = performance.now() - progress;
+        resetTime = false;
+    } else {
+        progress = timestamp - startTime;
+    }
+    
+    // restart if it finishes a loop
+    if (progress > speedFactor * 360) {
+        startTime = timestamp;
+        geojson.features[0].geometry.coordinates = [];
+    } else {
+        const x = progress / speedFactor;
+    // append new coordinates to the lineString
+        geojson.features[0].geometry.coordinates.push([x, y]);
+    // then update the map
+        map.getSource('line-animation').setData(geojson);
+    }
+    // Request the next frame of the animation.
+        animation = requestAnimationFrame(animateLine);
+}
 
-        reducer.coords.push({
-            x: projection([row.Lon,row.Lat])[0],
-            y: projection([row.Lon,row.Lat])[1],
-        });
-        
+
+map.on('load', () => {
+    map.addSource('paths', {
+        type: 'geojson',
+        data: '/data/geopaths-small.json'
     });
 
-    console.log(cleanData);
+    map.addLayer({
+            "id": "paths_layer",
+            "type": "line",
+            "source": "paths",
+            'paint': {
+                'line-color': '#ed6498',
+                'line-width': 1,
+                'line-opacity': 0.2
+            }
+    });
+});
+
+
+
+
+function styleMap() {
+    var layers = map.getStyle().layers;
+
+    var labelLayerId;
+    for (var i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+            labelLayerId = layers[i].id;
+            break;
+        }
+    }
+
+    const basicLayer = {
+        'id': '3d-buildings',
+        'source': 'composite',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 15,
+        'paint': {
+            'fill-extrusion-color': '#aaa',
+
+            // use an 'interpolate' expression to add a smooth transition effect to the
+            // buildings as the user zooms in
+            'fill-extrusion-height': [
+                "interpolate", ["linear"], ["zoom"],
+                15, 0,
+                15.05, ["get", "height"]
+            ],
+            'fill-extrusion-base': [
+                "interpolate", ["linear"], ["zoom"],
+                15, 0,
+                15.05, ["get", "min_height"]
+            ],
+            'fill-extrusion-opacity': .6
+        }
+    };
+    map.addLayer(basicLayer, labelLayerId);
 }
-
-function displayBuildings() {
-    const buildings = svg.selectAll('g')
-        .data(buildingArray);
-
-    buildings
-        .merge(buildings)
-        .attr('class', 'building')
-        .attr('id', d => d)
-        .on('mouseover', function() {
-            // console.log(d3.select(this).attr('id'))
-        });
-}
-
-const generatePath = d3.line()
-                    .x(function(d) { return d.x; })
-                    .y(function(d) { return d.y; })
-                    // .curve(d3.curveCardinal);
-
-function displayPath(pathData) {   
-    const coords = pathData.coords;
-    console.log(coords);
-    const randCol = getRandomColor();
-
-    svg.selectAll('circle')
-        .data(coords)
-        .enter().append('circle')
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y)
-        .attr('r', 4)
-        .attr('fill', randCol);
-
-    const path = svg.append("path")
-        .datum(coords)
-        .attr("class", "line") 
-        .attr("stroke", randCol) 
-        .attr("d", generatePath);
-
-    const totalLength = path.node().getTotalLength();
-
-    path
-        .attr("stroke-dasharray", totalLength + " " + totalLength)
-        .attr("stroke-dashoffset", totalLength)
-        .transition()
-        .duration(3000)
-        .attr("stroke-dashoffset", 0);
-}
-
-
-
-function getRandomColor() {
-    return "#"+((1<<24)*Math.random()|0).toString(16)
-}
-
-
