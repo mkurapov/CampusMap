@@ -69,7 +69,7 @@ function animateLine(timestamp) {
 
 map.on('load', () => {
 
-    d3.json('/data/pathsgeo.json').then(data => {
+    d3.json('/data/geopaths.json').then(data => {
         geojson = data;
         // geojson.features.splice(1);
         paths = geojson.features;
