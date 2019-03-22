@@ -1,9 +1,15 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4NWVoeGt5ZiJ9.IdfRD2MhG562b2oct7daNw';
 
+let isUsingTable = true;
+const tableSettings = {
+    zoom: 15.879236564204465,
+    center: [-114.1265761273005, 51.07719623624649]
+}
+
 const map = new mapboxgl.Map({
-    style: 'mapbox://styles/mapbox/light-v10',
-    center: [-114.1313808,  51.0774501],
-    zoom: 15.5,
+    style: 'mapbox://styles/mapbox/dark-v8',
+    center: isUsingTable ? tableSettings.center : [-114.1313808,  51.0774501],
+    zoom: isUsingTable ? tableSettings.zoom : 15.5,
     container: 'map'
 });
 
@@ -19,6 +25,29 @@ document.addEventListener('keydown', function(event) {
         map.setFilter("buildings-highlighted", ['in', 'id', ...selectedBuildings]);
         map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
     }
+
+    if (event.key == 'ArrowUp') {
+        let zoom = map.getZoom();
+        map.jumpTo({'zoom': zoom += 0.025 });
+    }
+
+    if (event.key == 'ArrowDown') {
+        let zoom = map.getZoom();
+        map.jumpTo({'zoom': zoom -= 0.025 });
+    }
+
+
+    // if (event.key == 'ArrowUp') {
+    //     let zoom = map.getZoom();
+    //     map.jumpTo({'zoom': zoom += 0.025 });
+    // }
+
+    // if (event.key == 'ArrowDown') {
+    //     let zoom = map.getZoom();
+    //     map.jumpTo({'zoom': zoom -= 0.025 });
+    // }
+
+
 });
 
 
@@ -157,7 +186,7 @@ function addBuildingLayer(data) {
             "data": data
         },
         'paint': {
-            'fill-color': '#62B6CB',
+            'fill-color': '#ffffff',
             'fill-opacity': 0.2,
             'fill-outline-color': '#000000'
             // 'line-width': 1,
@@ -183,70 +212,82 @@ function addBuildingLayer(data) {
 }
 
 
+function selectBuilding(bid) {
+    // if (!selectedBuildings.includes(bid))  {
+        selectedBuildings.push(bid);
+        map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+    // }
+}
 
+function deselectBuilding(bid) {
+    selectedBuildings = selectedBuildings.filter(id => id != bid);
+    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+}
 
 function beginAnimate() {
     startTime = performance.now();
     geojson.features = [];
     map.getSource('paths_layer').setData(geojson);
     animateLine();
-    nimation = requestAnimationFrame(animateLine);
+   animation = requestAnimationFrame(animateLine);
 }
 
 function run(data) {
     geojson = data[0];
-    console.log(geojson);
-
     geojson.features = geojson.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300);
     buildingData = data[1];
     paths = geojson.features;
     addBuildingLayer(buildingData);
-    addPathLayer(geojson);
+
+    // addPathLayer(geojson);
     // registerEventListeners();
     //beginAnimate();
     map.on('click', ev => {
+
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
         const highlightedBuildings = map.queryRenderedFeatures({layers: ['buildings-highlighted']});
-        // console.log(highlightedBuildings);
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            if (selectedBuildings.includes(bid)) {
-                selectedBuildings = selectedBuildings.filter(id => id != bid);
+            if (!selectedBuildings.includes(bid)) {
+                selectBuilding(bid);
             } else {    
-                selectedBuildings.push(bid);
+                deselectBuilding(bid);
             }
-            map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
         }
+      
 
-        if (selectedBuildings.length >= 2) {
-            const polygonBuilds = 
-                buildingData.features.filter(b => selectedBuildings.includes(b.properties.Building_n))
-                                     .map(b => b.geometry.coordinates).map(p => turf.polygon(p));
 
-            for (let i = 0; i < geojson.features.length; i++) {
-                const path = geojson.features[i];
-                const coords = path.geometry.coordinates;
-                
-                
-                for (let j = 0; j < coords.length; j++) {
-                    const pt = turf.point(coords[j]);
-
-                    polygonBuilds.forEach(poly => {
-                        if (turf.booleanPointInPolygon(pt, poly)) {
-                            selectedPaths.push(path.properties.id)
-                        }
-                    })
-                }
-            }
-
-            // const containedLines = geojson.features.
-            // console.log(geojson.features)
-
-            map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
-        }
-
+        // console.log(clickedBuilds);
+        // if (clickedBuilds.length > 0) {
             
+        // }
+
+        // if (selectedBuildings.length >= 2) {
+        //     const polygonBuilds = 
+        //         buildingData.features.filter(b => selectedBuildings.includes(b.properties.Building_n))
+        //                              .map(b => b.geometry.coordinates).map(p => turf.polygon(p));
+
+        //     for (let i = 0; i < geojson.features.length; i++) {
+        //         const path = geojson.features[i];
+        //         const coords = path.geometry.coordinates;
+                
+                
+        //         for (let j = 0; j < coords.length; j++) {
+        //             const pt = turf.point(coords[j]);
+
+        //             polygonBuilds.forEach(poly => {
+        //                 if (turf.booleanPointInPolygon(pt, poly)) {
+        //                     selectedPaths.push(path.properties.id)
+        //                 }
+        //             })
+        //         }
+        //     }
+
+        //     // const containedLines = geojson.features.
+        //     // console.log(geojson.features)
+
+        //     map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
+        // }
     });
-    
 }
