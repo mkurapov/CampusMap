@@ -3,23 +3,32 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4N
 const map = new mapboxgl.Map({
     style: 'mapbox://styles/mapbox/light-v10',
     center: [-114.1313808,  51.0774501],
-    zoom: 14.5,
-    // pitch: 45,
-    // bearing: -17.6,
+    zoom: 15.5,
     container: 'map'
 });
+
+map.on('load', () => {
+    Promise.all([
+        d3.json('/data/geopaths-small.json'), 
+        d3.json('/data/buildings.json')]).then(data => run(data))
+});
+ 
+
+const pauseButton = document.getElementById('pause');
+
+let geojson;
+let buildingData;
+let paths;
+let currentPathIndex = 0;
 
 let speedFactor = 3000; // number of frames per longitude degree
 let animation; // to store and cancel the animation
 let startTime = 0;
 let progress = 0; // progress = timestamp - startTime
-let geojson;
-let timePerPath = 10;
-let paths;
-var resetTime = false; // indicator of whether time reset is needed for the animation
-var pauseButton = document.getElementById('pause');
-let currentPathIndex = 0;
-let currentCoordIndex = 0;
+const timePerPath = 10;
+let resetTime = false; // indicator of whether time reset is needed for the animation
+
+let selectedBuildings = [];
 
 function animateLine(timestamp) {
     progress = timestamp - startTime;
@@ -33,11 +42,9 @@ function animateLine(timestamp) {
     }
 
     if (isDrawing) {
-         console.log('drawing');
         if (currentPathIndex < paths.length - 1) {
             currentPathIndex++;
             geojson.features.push(paths[currentPathIndex]);
-            console.log(paths[currentPathIndex]);
             map.getSource('paths_layer').setData(geojson);
         } else {
             geojson.features = [];
@@ -66,93 +73,121 @@ function animateLine(timestamp) {
     animation = requestAnimationFrame(animateLine);
 }
 
+function registerEventListeners() {
 
-map.on('load', () => {
-
-    d3.json('/data/geopaths.json').then(data => {
-        geojson = data;
-        // geojson.features.splice(1);
-        paths = geojson.features;
-        // map.addSource('paths', {
-        //     type: 'geojson',
-        //     data: geojson
-        // });
-
-        map.addLayer({
-            "id": "paths_layer",
-            "type": "line",
-            "source": {
-                "type": "geojson",
-                "data": geojson
-            },
-            'paint': {
-                'line-color': '#ed6498',
-                'line-width': 1,
-                'line-opacity': 0.2
-            }
-        });
-            
-
+    pauseButton.addEventListener('click', () => {
+        pauseButton.classList.toggle('pause');
+        if (pauseButton.classList.contains('pause')) {
+            cancelAnimationFrame(animation);
+        } else {
+            resetTime = true;
+            animateLine();
+        }
+    });
+}
         
-        // pauseButton.addEventListener('click', () => {
-        //     pauseButton.classList.toggle('pause');
-        //     if (pauseButton.classList.contains('pause')) {
-        //         cancelAnimationFrame(animation);
-        //     } else {
-        //         resetTime = true;
-        //         animateLine();
-        //     }
-        //     });
 
-        startTime = performance.now();
-        geojson.features = [];
-        map.getSource('paths_layer').setData(geojson);
- 
-        animateLine();
+function drawLines() {
+    //check what filters are on
+}
 
-        animation = requestAnimationFrame(animateLine);
-    })
-    
-});
+function selectBuilding(bid) {
 
+}
 
+function filterByTime() {
+    // can you choose a time interval? hour bins
+    //does it all show all paths before
+    // hook them up to keyboard to test
+}
 
+function getPathsForBuilding(bid) {
 
-function styleMap() {
-    var layers = map.getStyle().layers;
+}
 
-    var labelLayerId;
-    for (var i = 0; i < layers.length; i++) {
-        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
-            labelLayerId = layers[i].id;
-            break;
-        }
-    }
-
-    const basicLayer = {
-        'id': '3d-buildings',
-        'source': 'composite',
-        'source-layer': 'building',
-        'filter': ['==', 'extrude', 'true'],
-        'type': 'fill-extrusion',
-        'minzoom': 15,
+function addPathLayer(data) {
+    map.addLayer({
+        "id": "paths-layer",
+        "type": "line",
+        "source": {
+            "type": "geojson",
+            "data": data
+        },
         'paint': {
-            'fill-extrusion-color': '#aaa',
-
-            // use an 'interpolate' expression to add a smooth transition effect to the
-            // buildings as the user zooms in
-            'fill-extrusion-height': [
-                "interpolate", ["linear"], ["zoom"],
-                15, 0,
-                15.05, ["get", "height"]
-            ],
-            'fill-extrusion-base': [
-                "interpolate", ["linear"], ["zoom"],
-                15, 0,
-                15.05, ["get", "min_height"]
-            ],
-            'fill-extrusion-opacity': .6
+            'line-color': '#ed6498',
+            'line-width': 1,
+            'line-opacity': 0.2
         }
-    };
-    map.addLayer(basicLayer, labelLayerId);
+    });
+}
+
+
+function addBuildingLayer(data) {
+
+
+    map.addLayer({
+        "id": "buildings-layer",
+        "type": "fill",
+        "source": {
+            "type": "geojson",
+            "data": data
+        },
+        'paint': {
+            'fill-color': '#62B6CB',
+            'fill-opacity': 0.2,
+            'fill-outline-color': '#000000'
+            // 'line-width': 1,
+            // 'line-opacity': 0.2
+        }
+    });
+
+    map.addLayer({
+        "id": "buildings-highlighted",
+        "type": "fill",
+        "source": {
+            "type": "geojson",
+            "data": data
+        },
+        // "source-layer": "original",
+        "filter": ["in", "Building_n", ""],
+        "paint": {
+            "fill-outline-color": "#484896",
+            "fill-color": "#6e599f",
+            "fill-opacity": 0.75
+            },
+        });
+}
+
+
+
+
+function beginAnimate() {
+    startTime = performance.now();
+    geojson.features = [];
+    map.getSource('paths_layer').setData(geojson);
+    animateLine();
+    nimation = requestAnimationFrame(animateLine);
+}
+
+function run(data) {
+    geojson = data[0];
+    buildingData = data[1];
+    paths = geojson.features;
+    addBuildingLayer(buildingData);
+    addPathLayer(geojson);
+    // registerEventListeners();
+    //beginAnimate();
+    map.on('click', 'buildings-layer', ev => {
+        const targets = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
+        const bid = targets[0].properties.Building_n;
+
+        if (selectedBuildings.includes(bid)) {
+            selectedBuildings = selectedBuildings.filter(id => id != bid);
+        } else {    
+            selectedBuildings.push(bid);
+        }
+            
+        map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+    });
+    
 }
