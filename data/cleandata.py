@@ -15,6 +15,7 @@ def resetPath(path):
     return {
         'id': -1,
         'coords':[],
+        'bids': []
         # 'startTime':{}
         # 'endTime':''
     }
@@ -26,6 +27,7 @@ with open('data/paths-full.csv', newline='') as csvfile:
     currentPath = {
         'id': -1,
         # 'startTime':{}
+        'bids': [],
         'coords':[],
         # 'startTime':'',
         # 'endTime':''
@@ -35,9 +37,12 @@ with open('data/paths-full.csv', newline='') as csvfile:
 
     for index, row in enumerate(rows):
         rowId = row['Path_ID']
+        # print(rowId)
 
         if (rowId != currentPath['id']):
             # currentPath['endTime'] = previousTime
+            # print(rowId)
+            # print(currentPath)
             cleanData.append(currentPath)
             currentPath = resetPath(currentPath)
             currentPath['id'] = rowId
@@ -47,9 +52,19 @@ with open('data/paths-full.csv', newline='') as csvfile:
 
         coords = [
             float(row['Lon']), float(row['Lat'])
-        ]    
-    
+        ]  
         currentPath['coords'].append(coords)
+
+
+        bids = currentPath['bids']
+        newBid = row['Building_ID']
+        
+
+        if ((newBid != "Outdoors") & (newBid not in bids)):
+            currentPath['bids'].append(row['Building_ID'])
+
+
+      
     
     cleanData.pop(0)
     cleanData.sort(key=lambda x: x['startTime'])

@@ -1,13 +1,13 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4NWVoeGt5ZiJ9.IdfRD2MhG562b2oct7daNw';
 
-let isUsingTable = true;
+let isUsingTable = false;
 const tableSettings = {
     zoom: 15.879236564204465,
     center: [-114.1265761273005, 51.07719623624649]
 }
 
 const map = new mapboxgl.Map({
-    style: 'mapbox://styles/mapbox/dark-v8',
+    style: 'mapbox://styles/mkurapov/cjtp3qjvh8bcf1foc9kfzj9ep',
     center: isUsingTable ? tableSettings.center : [-114.1313808,  51.0774501],
     zoom: isUsingTable ? tableSettings.zoom : 15.5,
     container: 'map'
@@ -53,7 +53,7 @@ document.addEventListener('keydown', function(event) {
 
 const pauseButton = document.getElementById('pause');
 
-let geojson;
+let pathData;
 let buildingData;
 let paths;
 let currentPathIndex = 0;
@@ -82,10 +82,10 @@ function animateLine(timestamp) {
     if (isDrawing) {
         if (currentPathIndex < paths.length - 1) {
             currentPathIndex++;
-            geojson.features.push(paths[currentPathIndex]);
-            map.getSource('paths_layer').setData(geojson);
+            pathData.features.push(paths[currentPathIndex]);
+            map.getSource('paths_layer').setData(pathData);
         } else {
-            geojson.features = [];
+            pathData.features = [];
             currentPathIndex = 0;
         }
 
@@ -96,7 +96,7 @@ function animateLine(timestamp) {
     // if (progress > speedFactor * 1) {
     //     // console.log('restart');
     //     startTime = timestamp;
-    //     // geojson.features[0].geometry.coordinates = [];
+    //     // pathData.features[0].geometry.coordinates = [];
     // } else {
     //         // console.log('now');
     //         
@@ -204,7 +204,8 @@ function addBuildingLayer(data) {
         // "source-layer": "original",
         "filter": ["in", "Building_n", ""],
         "paint": {
-            "fill-outline-color": "#62B6CB",
+            "fill-outline-color": "rgb(54,54,54)",
+            //  'line-width': 14,
             "fill-color": "#62B6CB",
             "fill-opacity": 1
             },
@@ -213,63 +214,72 @@ function addBuildingLayer(data) {
 
 
 function selectBuilding(bid) {
-    // if (!selectedBuildings.includes(bid))  {
+    if (!selectedBuildings.includes(bid)) {
         selectedBuildings.push(bid);
-        map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
-    // }
+    } else {
+        selectedBuildings = selectedBuildings.filter(id => id != bid);
+    }
+
+    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 }
 
 function deselectBuilding(bid) {
-    selectedBuildings = selectedBuildings.filter(id => id != bid);
-    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+    
 }
 
 function beginAnimate() {
     startTime = performance.now();
-    geojson.features = [];
-    map.getSource('paths_layer').setData(geojson);
+    pathData.features = [];
+    map.getSource('paths_layer').setData(pathData);
     animateLine();
    animation = requestAnimationFrame(animateLine);
 }
 
 function run(data) {
-    geojson = data[0];
-    geojson.features = geojson.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300);
+    pathData = data[0];
+    pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300);
     buildingData = data[1];
-    paths = geojson.features;
+    paths = pathData.features;
     addBuildingLayer(buildingData);
 
-    // addPathLayer(geojson);
+    addPathLayer(pathData);
     // registerEventListeners();
     //beginAnimate();
     map.on('click', ev => {
 
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
-        const highlightedBuildings = map.queryRenderedFeatures({layers: ['buildings-highlighted']});
+        const somepaths = map.queryRenderedFeatures(ev.point, {layers: ['paths-layer']});
+        const hipaths = map.queryRenderedFeatures({layers: ['paths-highlighted']});
+        
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            if (!selectedBuildings.includes(bid)) {
-                selectBuilding(bid);
-            } else {    
-                deselectBuilding(bid);
-            }
+            console.log(bid);
+            selectBuilding(bid);
+
+            const pathIds = pathData.features
+                .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid)))
+                .map(p => p.properties.id);
+            map.setFilter("paths-highlighted", ['in', 'id', ...pathIds]);
         }
+        
+        if (selectedBuildings.length >= 2) {
+            // console.log(selectedBuildings);
+            // console.log(pathData.features)
+        }
+
+        console.log(somepaths);
+        console.log(hipaths);
+        console.log(selectedBuildings);
       
-
-
-        // console.log(clickedBuilds);
-        // if (clickedBuilds.length > 0) {
-            
-        // }
 
         // if (selectedBuildings.length >= 2) {
         //     const polygonBuilds = 
         //         buildingData.features.filter(b => selectedBuildings.includes(b.properties.Building_n))
         //                              .map(b => b.geometry.coordinates).map(p => turf.polygon(p));
 
-        //     for (let i = 0; i < geojson.features.length; i++) {
-        //         const path = geojson.features[i];
+        //     for (let i = 0; i < pathData.features.length; i++) {
+        //         const path = pathData.features[i];
         //         const coords = path.geometry.coordinates;
                 
                 
@@ -284,8 +294,8 @@ function run(data) {
         //         }
         //     }
 
-        //     // const containedLines = geojson.features.
-        //     // console.log(geojson.features)
+        //     // const containedLines = pathData.features.
+        //     // console.log(pathData.features)
 
         //     map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
         // }
