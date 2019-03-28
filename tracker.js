@@ -22,9 +22,14 @@ socket.on('Building Lost', msg => {
 
 
 function mapBuildingValToId(bval) {
-    if (bval == "Energy.Enviroment.Experiential Learning") {
-       return 'EEEL';
-    } else {
-        return 'MS';
-    }
+    return buildingMap[bval] ? buildingMap[bval] : '';
+}
+
+const buildingMap = {
+    'Energy.Enviroment.Experiential Learning': 'EEEL',
+    'Math Science':'MS',
+    'Biological Science': 'BI',
+    'Cascade Hall':'CD',
+    'Art Building':'AB',
+    'Olympic Oval': 'OO'
 }
