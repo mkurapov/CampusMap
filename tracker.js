@@ -7,7 +7,7 @@ socket.on('connect', () => {
         username: 'fred',
         platform: 'js'
     });
-});
+});1
 
 
 socket.on('Building Found', msg => {

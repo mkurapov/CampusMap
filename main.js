@@ -113,15 +113,42 @@ function animateLine(timestamp) {
 
 function registerEventListeners() {
 
-    pauseButton.addEventListener('click', () => {
-        pauseButton.classList.toggle('pause');
-        if (pauseButton.classList.contains('pause')) {
-            cancelAnimationFrame(animation);
-        } else {
-            resetTime = true;
-            animateLine();
-        }
-    });
+    // pauseButton.addEventListener('click', () => {
+    //     pauseButton.classList.toggle('pause');
+    //     if (pauseButton.classList.contains('pause')) {
+    //         cancelAnimationFrame(animation);
+    //     } else {
+    //         resetTime = true;
+    //         animateLine();
+    //     }
+    // });
+
+    document.getElementById('slider').addEventListener('input', e => {
+        const hour = parseInt(e.target.value);
+        console.log(hour);
+
+        const pathIds = pathData.features
+                .filter(p => {
+                    const pathHour = parseInt(p.properties.startTime.slice(0,2));
+                    return pathHour == hour;
+                })
+                .map(p => p.properties.id);
+
+        map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
+        map.setFilter("paths-highlighted", ['in', 'id', '']);
+
+
+        // var hour = parseInt(e.target.value);
+        // // update the map
+        // map.setFilter('collisions', ['==', ['number', ['get', 'Hour']], hour]);
+      
+        // // converting 0-23 hour to AMPM format
+        // var ampm = hour >= 12 ? 'PM' : 'AM';
+        // var hour12 = hour % 12 ? hour % 12 : 12;
+      
+        // update text in the UI
+        // document.getElementById('active-hour').innerText = hour12 + ampm;
+      });
 }
         
 
@@ -154,7 +181,7 @@ function addPathLayer(data) {
         'paint': {
             'line-color': '#ed6498',
             'line-width': 1,
-            'line-opacity': 0.2
+            'line-opacity': 0.1
         }
     });
 
@@ -237,29 +264,32 @@ function beginAnimate() {
 
 function run(data) {
     pathData = data[0];
-    pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300);
+    // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300);
     buildingData = data[1];
     paths = pathData.features;
     addBuildingLayer(buildingData);
 
     addPathLayer(pathData);
-    // registerEventListeners();
+    registerEventListeners();
     //beginAnimate();
     map.on('click', ev => {
 
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
-        const somepaths = map.queryRenderedFeatures(ev.point, {layers: ['paths-layer']});
-        const hipaths = map.queryRenderedFeatures({layers: ['paths-highlighted']});
+        const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
+
+        // const hipaths = map.queryRenderedFeatures({layers: ['paths-highlighted']});
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            console.log(bid);
+            // console.log(bid);
             selectBuilding(bid);
 
             const pathIds = pathData.features
                 .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid)))
+                .filter(p => visiblePathIds.includes(p.properties.id)) // only highlight visible paths
                 .map(p => p.properties.id);
+
             map.setFilter("paths-highlighted", ['in', 'id', ...pathIds]);
         }
         
@@ -268,9 +298,9 @@ function run(data) {
             // console.log(pathData.features)
         }
 
-        console.log(somepaths);
-        console.log(hipaths);
-        console.log(selectedBuildings);
+        // console.log(somepaths);
+        // console.log(hipaths);
+        // console.log(selectedBuildings);
       
 
         // if (selectedBuildings.length >= 2) {
