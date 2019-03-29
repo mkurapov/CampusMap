@@ -61,6 +61,8 @@ document.addEventListener('keydown', function(event) {
 
 const pauseButton = document.getElementById('pause');
 const timeEl = document.getElementById('time');
+const knobs = document.getElementsByClassName('svg-container');
+const slider = document.getElementById('slider');
 
 let pathData;
 let buildingData;
@@ -76,6 +78,8 @@ let resetTime = false; // indicator of whether time reset is needed for the anim
 
 let selectedBuildings = [];
 let selectedPaths = [];
+
+let currentHour = 0;
 
 function animateLine(timestamp) {
     progress = timestamp - startTime;
@@ -121,6 +125,7 @@ function animateLine(timestamp) {
 }
 
 function updateTime(hour) {
+    currentHour = hour;
     const pathIds = pathData.features
             .filter(p => {
                 const pathHour = parseInt(p.properties.startTime.slice(0,2));
@@ -150,7 +155,20 @@ function registerEventListeners() {
     //     }
     // });
 
-    document.getElementById('slider').addEventListener('input', e => updateTime(parseInt(e.target.value)));
+    slider.addEventListener('input', e => updateTime(parseInt(e.target.value)));
+    document.addEventListener('wheel', ev => {
+        const knob1 = knobs[1];
+       
+        if (ev.deltaY < 0 && currentHour < 23) {    
+            currentHour++;
+        }
+        else if (ev.deltaY > 0 && currentHour > 0)  {
+            currentHour--;
+        }
+        updateTime(currentHour);
+        slider.value = currentHour;
+        knob1.style.transform = `rotate(${currentHour*15}deg)`
+    })
 }
         
 
@@ -274,12 +292,21 @@ function run(data) {
 
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
+
+         
         const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
 
         // const hipaths = map.queryRenderedFeatures({layers: ['paths-highlighted']});
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
+            if (bid == 'OO') {
+                knobs[0].style.display = 'block';
+            }
+
+            if (bid == 'MH') {
+                knobs[1].style.display = 'block';
+            }
             // console.log(bid);
             selectBuilding(bid);
 
