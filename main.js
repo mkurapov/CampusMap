@@ -1,15 +1,22 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4NWVoeGt5ZiJ9.IdfRD2MhG562b2oct7daNw';
 
 let isUsingTable = false;
+let isUsingPlayArea = true;
+
 const tableSettings = {
     zoom: 15.879236564204465,
     center: [-114.1265761273005, 51.07719623624649]
 }
 
+const playareaSettings = {
+    zoom: 15.5,
+    center: [-114.12703253970648, 51.077833820801914]
+}
+
 const map = new mapboxgl.Map({
     style: 'mapbox://styles/mkurapov/cjtp3qjvh8bcf1foc9kfzj9ep',
-    center: isUsingTable ? tableSettings.center : [-114.1313808,  51.0774501],
-    zoom: isUsingTable ? tableSettings.zoom : 15.5,
+    center: isUsingPlayArea ? playareaSettings.center : [-114.1313808,  51.0774501],
+    zoom: isUsingPlayArea ? playareaSettings.zoom : 15.5,
     container: 'map'
 });
 
@@ -21,6 +28,7 @@ map.on('load', () => {
 
 document.addEventListener('keydown', function(event) {
     if (event.key == '1') {
+        console.log(map.getCenter())
         selectedBuildings = selectedPaths = [];
         map.setFilter("buildings-highlighted", ['in', 'id', ...selectedBuildings]);
         map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
@@ -52,6 +60,7 @@ document.addEventListener('keydown', function(event) {
 
 
 const pauseButton = document.getElementById('pause');
+const timeEl = document.getElementById('time');
 
 let pathData;
 let buildingData;
@@ -111,6 +120,24 @@ function animateLine(timestamp) {
     animation = requestAnimationFrame(animateLine);
 }
 
+function updateTime(hour) {
+    const pathIds = pathData.features
+            .filter(p => {
+                const pathHour = parseInt(p.properties.startTime.slice(0,2));
+                return pathHour == hour;
+            })
+            .map(p => p.properties.id);
+            
+
+    map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
+    map.setFilter("paths-highlighted", ['in', 'id', '']);
+    
+    let date = new Date();
+    date.setHours(hour);
+    date.setMinutes(0);
+    timeEl.textContent = date.toTimeString().slice(0, 5);
+}
+
 function registerEventListeners() {
 
     // pauseButton.addEventListener('click', () => {
@@ -123,41 +150,12 @@ function registerEventListeners() {
     //     }
     // });
 
-    document.getElementById('slider').addEventListener('input', e => {
-        const hour = parseInt(e.target.value);
-        console.log(hour);
-
-        const pathIds = pathData.features
-                .filter(p => {
-                    const pathHour = parseInt(p.properties.startTime.slice(0,2));
-                    return pathHour == hour;
-                })
-                .map(p => p.properties.id);
-
-        map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
-        map.setFilter("paths-highlighted", ['in', 'id', '']);
-
-
-        // var hour = parseInt(e.target.value);
-        // // update the map
-        // map.setFilter('collisions', ['==', ['number', ['get', 'Hour']], hour]);
-      
-        // // converting 0-23 hour to AMPM format
-        // var ampm = hour >= 12 ? 'PM' : 'AM';
-        // var hour12 = hour % 12 ? hour % 12 : 12;
-      
-        // update text in the UI
-        // document.getElementById('active-hour').innerText = hour12 + ampm;
-      });
+    document.getElementById('slider').addEventListener('input', e => updateTime(parseInt(e.target.value)));
 }
         
 
 function drawLines() {
     //check what filters are on
-}
-
-function selectBuilding(bid) {
-
 }
 
 function filterByTime() {
@@ -264,7 +262,7 @@ function beginAnimate() {
 
 function run(data) {
     pathData = data[0];
-    // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300);
+    // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300); 
     buildingData = data[1];
     paths = pathData.features;
     addBuildingLayer(buildingData);
@@ -331,3 +329,8 @@ function run(data) {
         // }
     });
 }
+
+
+
+// 1. All lines on, with all ids. Remove all those not in selected buildings
+// Export buildings as normal SVGs
