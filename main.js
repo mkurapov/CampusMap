@@ -1,4 +1,5 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4NWVoeGt5ZiJ9.IdfRD2MhG562b2oct7daNw';
+const allBuildings = ["GS","MF","GR","OO","TRA","SH","KNB","MFH","CC","ST","EN","EEEL","AB","DC","RC","TFDL","EDC","EDT","TI","BI","TRB","EN","IH","OL","CD","GL","HP","YA","KA","PP","RU","CDC","WS","VC","VC","CR","15BI","15PF","EDT","AU","15TFDL","EN","AD","PF","MT","MB","CH","RT","KNA","MSC","MH","CCIT","ICT","ES","SB","SS","SA","MS","TFDL2"];
 
 let isUsingTable = false;
 let isUsingPlayArea = true;
@@ -187,6 +188,22 @@ function getPathsForBuilding(bid) {
 }
 
 function addPathLayer(data) {
+
+    const lineColor = [
+        'match',
+        ['get', 'bearingName'],
+        'N', 'rgb(255,0,0)',
+        'NE','rgb(255,133,0)',
+        'E','rgb(255,255,0)',
+        'SE', 'rgb(133,255,0)',
+        'S','rgb(0,133,133)',
+        'SW', 'rgb(0,0,255)',
+        'W','rgb(87,41,203)',
+        'NW', 'rgb(133,0,133)',
+        /* other */ '#ccc'
+    ];
+
+
     map.addLayer({
         "id": "paths-layer",
         "type": "line",
@@ -195,7 +212,7 @@ function addPathLayer(data) {
             "data": data
         },
         'paint': {
-            'line-color': '#ed6498',
+            'line-color': lineColor,
             'line-width': 1,
             'line-opacity': 0.1
         }
@@ -278,82 +295,95 @@ function beginAnimate() {
    animation = requestAnimationFrame(animateLine);
 }
 
+function addCompassDirection() {
+    pathData.features.forEach(p => {
+        const coords = p.geometry.coordinates;
+        const startPoint = coords[0];
+        const endPoint = coords[coords.length-1];
+
+        const x1 = endPoint[1];
+        const y1 = endPoint[0];
+
+        const x2 = startPoint[1];
+        const y2 = startPoint[0];
+
+        const radians = Math.atan2((y1 - y2), (x1 - x2));
+
+        const bearing = radians * (180 / Math.PI);
+        // console.log(bearing);
+
+        var coordNames = ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"];
+        var coordIndex = Math.round(bearing / 45);
+        if (coordIndex < 0) {
+            coordIndex = coordIndex + 8
+        };
+
+        // p['bearing'] = {
+        //     value: bearing,
+        //     name: coordNames[coordIndex]
+        // };
+
+        p.properties['bearingName'] = coordNames[coordIndex];
+        // console.log(p);
+        // console.log(p.bearing)
+
+//         var y = Math.sin(dLon) * Math.cos(lat2);
+// var x = Math.cos(lat1)*Math.sin(lat2) -
+//         Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+// var brng = Math.atan2(y, x).toDeg();
+
+        // console.log(p);
+    })
+}
+
+
 function run(data) {
     pathData = data[0];
     // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300); 
     buildingData = data[1];
+    addCompassDirection();
+
     paths = pathData.features;
+
     addBuildingLayer(buildingData);
+
+    selectedBuildings = allBuildings;
+    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 
     addPathLayer(pathData);
     registerEventListeners();
     //beginAnimate();
     map.on('click', ev => {
-
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
 
          
-        const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
+        // const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
 
-        // const hipaths = map.queryRenderedFeatures({layers: ['paths-highlighted']});
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            if (bid == 'OO') {
-                knobs[0].style.display = 'block';
-            }
+            // if (bid == 'OO') {
+            //     knobs[0].style.display = 'block';
+            // }
 
-            if (bid == 'MH') {
-                knobs[1].style.display = 'block';
-            }
+            // if (bid == 'MH') {
+            //     knobs[1].style.display = 'block';
+            // }
             // console.log(bid);
             selectBuilding(bid);
 
             const pathIds = pathData.features
-                .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid)))
-                .filter(p => visiblePathIds.includes(p.properties.id)) // only highlight visible paths
+                .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
+                // .filter(p => visiblePathIds.includes(p.properties.id)) // only highlight visible paths
                 .map(p => p.properties.id);
 
-            map.setFilter("paths-highlighted", ['in', 'id', ...pathIds]);
+            map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
         }
         
         if (selectedBuildings.length >= 2) {
-            // console.log(selectedBuildings);
-            // console.log(pathData.features)
         }
 
-        // console.log(somepaths);
-        // console.log(hipaths);
-        // console.log(selectedBuildings);
-      
-
-        // if (selectedBuildings.length >= 2) {
-        //     const polygonBuilds = 
-        //         buildingData.features.filter(b => selectedBuildings.includes(b.properties.Building_n))
-        //                              .map(b => b.geometry.coordinates).map(p => turf.polygon(p));
-
-        //     for (let i = 0; i < pathData.features.length; i++) {
-        //         const path = pathData.features[i];
-        //         const coords = path.geometry.coordinates;
-                
-                
-        //         for (let j = 0; j < coords.length; j++) {
-        //             const pt = turf.point(coords[j]);
-
-        //             polygonBuilds.forEach(poly => {
-        //                 if (turf.booleanPointInPolygon(pt, poly)) {
-        //                     selectedPaths.push(path.properties.id)
-        //                 }
-        //             })
-        //         }
-        //     }
-
-        //     // const containedLines = pathData.features.
-        //     // console.log(pathData.features)
-
-        //     map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
-        // }
     });
 }
 
