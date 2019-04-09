@@ -317,22 +317,7 @@ function addCompassDirection() {
         if (coordIndex < 0) {
             coordIndex = coordIndex + 8
         };
-
-        // p['bearing'] = {
-        //     value: bearing,
-        //     name: coordNames[coordIndex]
-        // };
-
         p.properties['bearingName'] = coordNames[coordIndex];
-        // console.log(p);
-        // console.log(p.bearing)
-
-//         var y = Math.sin(dLon) * Math.cos(lat2);
-// var x = Math.cos(lat1)*Math.sin(lat2) -
-//         Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-// var brng = Math.atan2(y, x).toDeg();
-
-        // console.log(p);
     })
 }
 
@@ -347,47 +332,23 @@ function run(data) {
 
     addBuildingLayer(buildingData);
 
-    selectedBuildings = allBuildings;
-    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
-
     addPathLayer(pathData);
-    registerEventListeners();
-    //beginAnimate();
+    map.setFilter("paths-layer", ['in', 'id', '']);
+
+    // registerEventListeners();
+
     map.on('click', ev => {
-        // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
-
-         
-        // const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
-
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            // if (bid == 'OO') {
-            //     knobs[0].style.display = 'block';
-            // }
-
-            // if (bid == 'MH') {
-            //     knobs[1].style.display = 'block';
-            // }
-            // console.log(bid);
             selectBuilding(bid);
 
             const pathIds = pathData.features
-                .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
-                // .filter(p => visiblePathIds.includes(p.properties.id)) // only highlight visible paths
+                .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
                 .map(p => p.properties.id);
 
             map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
         }
-        
-        if (selectedBuildings.length >= 2) {
-        }
-
     });
 }
-
-
-
-// 1. All lines on, with all ids. Remove all those not in selected buildings
-// Export buildings as normal SVGs
