@@ -26,29 +26,21 @@ with open('data/paths-full.csv', newline='') as csvfile:
 
     currentPath = {
         'id': -1,
-        # 'startTime':{}
         'bids': [],
         'coords':[],
-        # 'startTime':'',
-        # 'endTime':''
     }
 
-    # previousTime = ''
 
     for index, row in enumerate(rows):
         rowId = row['Path_ID']
-        # print(rowId)
+
+        print(rowId)
 
         if (rowId != currentPath['id']):
-            # currentPath['endTime'] = previousTime
-            # print(rowId)
-            # print(currentPath)
             cleanData.append(currentPath)
             currentPath = resetPath(currentPath)
             currentPath['id'] = rowId
             currentPath['startTime'] = massageDate(row['Loct'])
-
-        # previousTime = row['Loct']
 
         coords = [
             float(row['Lon']), float(row['Lat'])
@@ -58,10 +50,12 @@ with open('data/paths-full.csv', newline='') as csvfile:
 
         bids = currentPath['bids']
         newBid = row['Building_ID']
-        
 
+        if (newBid.startswith('EN')):
+            newBid = 'EN'
+        
         if ((newBid != "Outdoors") & (newBid not in bids)):
-            currentPath['bids'].append(row['Building_ID'])
+            currentPath['bids'].append(newBid)
 
 
       

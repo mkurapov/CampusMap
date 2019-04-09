@@ -342,7 +342,6 @@ function run(data) {
     // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300); 
     buildingData = data[1];
     addCompassDirection();
-
     paths = pathData.features;
 
     addBuildingLayer(buildingData);
@@ -351,31 +350,18 @@ function run(data) {
     map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 
     addPathLayer(pathData);
-    registerEventListeners();
-    //beginAnimate();
+    // registerEventListeners();
     map.on('click', ev => {
-        // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
-
-         
-        // const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
-
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            // if (bid == 'OO') {
-            //     knobs[0].style.display = 'block';
-            // }
-
-            // if (bid == 'MH') {
-            //     knobs[1].style.display = 'block';
-            // }
-            // console.log(bid);
+            
+            console.log(bid);
             selectBuilding(bid);
 
             const pathIds = pathData.features
-                .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
-                // .filter(p => visiblePathIds.includes(p.properties.id)) // only highlight visible paths
+                .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) 
                 .map(p => p.properties.id);
 
             map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
