@@ -247,7 +247,7 @@ function addBuildingLayer(data) {
         },
         'paint': {
             'fill-color': '#ffffff',
-            'fill-opacity': 0.2,
+            'fill-opacity': 0.1,
             'fill-outline-color': '#000000'
             // 'line-width': 1,
             // 'line-opacity': 0.2
@@ -281,10 +281,6 @@ function selectBuilding(bid) {
     }
 
     map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
-}
-
-function deselectBuilding(bid) {
-    
 }
 
 function beginAnimate() {
@@ -337,9 +333,55 @@ function addCompassDirection() {
 }
 
 
+function drawPlayarea() {
+    const svg = d3.select("#play-area"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+    console.log(svg, width, height)
+    
+    
+    const buildings = [{
+        id:'MH',
+        w: 183, 
+        h: 133,
+        r: 140,
+    }, {
+        id:'MFH',
+        w: 123,
+        h: 98,
+        r: 80
+    }];
+
+    const xOffset = width * 0.3;
+    const paddingY = 300;
+    const yOffset = 100;
+
+    var builds = svg
+    .selectAll(".building")
+    .data(buildings)
+    .attr('style', (d, i) => `transform:translate(${xOffset}px, ${yOffset + (paddingY * i)}px); transform-origin:center;`)
+
+    const radius = 100;
+
+    const approxWidth = 183;
+    const approxHeight = 133;
+
+    var circ = svg
+    .selectAll(".shadow")
+    .data(buildings)
+    .enter().append('circle')
+    .attr('r', d => d.r)
+    .attr('class', 'shadow')
+    .attr('style', (d, i) => `transform:translate(${xOffset + d.w/2}px, ${yOffset + (paddingY * i) + d.h/2}px); transform-origin:center;`)
+    
+    // console.log(builds)
+}
+
+
+
 function run(data) {
     pathData = data[0];
-    // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300); 
     buildingData = data[1];
     addCompassDirection();
     paths = pathData.features;
@@ -350,14 +392,16 @@ function run(data) {
     map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 
     addPathLayer(pathData);
-    // registerEventListeners();
+
+    registerEventListeners();
+    drawPlayarea();
+
     map.on('click', ev => {
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
             
-            console.log(bid);
             selectBuilding(bid);
 
             const pathIds = pathData.features
@@ -366,10 +410,6 @@ function run(data) {
 
             map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
         }
-        
-        if (selectedBuildings.length >= 2) {
-        }
-
     });
 }
 
