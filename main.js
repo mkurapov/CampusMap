@@ -337,9 +337,6 @@ function drawPlayarea() {
     const svg = d3.select("#play-area"),
     width = +svg.attr("width"),
     height = +svg.attr("height");
-
-    console.log(svg, width, height)
-    
     
     const buildings = [{
         id:'MH',
@@ -360,6 +357,7 @@ function drawPlayarea() {
     var builds = svg
     .selectAll(".building")
     .data(buildings)
+    .attr('class', 'loaded')
     .attr('style', (d, i) => `transform:translate(${xOffset}px, ${yOffset + (paddingY * i)}px); transform-origin:center;`)
 
     const radius = 100;
@@ -374,8 +372,6 @@ function drawPlayarea() {
     .attr('r', d => d.r)
     .attr('class', 'shadow')
     .attr('style', (d, i) => `transform:translate(${xOffset + d.w/2}px, ${yOffset + (paddingY * i) + d.h/2}px); transform-origin:center;`)
-    
-    // console.log(builds)
 }
 
 

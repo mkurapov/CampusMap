@@ -97,7 +97,11 @@
 
         .building {
             fill: #62B6CB;
+            opacity: 0;
+        }
 
+        .building.loaded {
+            opacity: 1;
         }
 
         .shadow {
@@ -113,7 +117,7 @@
 <h1 id="time">00:00</h1>
   <input id='slider' class='row' type='range' min='0' max='23' step='1' value='0' />
 </div>
-<svg id="play-area" width="500" height="600">
+<!-- <svg id="play-area" width="500" height="600">
         <g class="building" id="MH">
                 <path id="MH" d="M778,480.3l20-12.5-1.7-2.5,30.3-18.6,6.7,10.5,11.7-.3-.6-26.4h5.5l-.2-5h9.1l-.2-5h8.7l-.1-5.3h8.3v-3.9h9.7l11.9,19.4,15.8-3.1,3.8,5.9,8.8-5.5,3.5,5.5,10-6.3,7.5,11.3,7.6,4-2.6,4.9.8,16.1,9.6,16.7-14.2,9.5-5.4-7.6-9.3,6.4-3.3-4.8-9.6,6.2-3.1-5-10.1,6.4-3.8-5.8-26.9,17.7L872,497l-9.9,5.8,3.9,6.4-5.1,3,14.5,22-15.8,10L847,524.6l-19.3,12.3s-2.1,1.3-1.7,2.8c1.1,4.4-2.7,6.5-6.5,3.9-1.8-1.2-4.8-6.2-4.8-6.2Z" transform="translate(-778 -411.3)" fill="#62b6cb"/>
             </g>
@@ -122,7 +126,8 @@
 
         </g>
         
-</svg>
+</svg> -->
+<img src="focus1.png" id="play-area"/>
 <div id='map'></div>
 <!-- <button id='pause'></button> -->
 
