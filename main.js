@@ -2,7 +2,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4N
 const allBuildings = ["GS","MF","GR","OO","TRA","SH","KNB","MFH","CC","ST","EN","EEEL","AB","DC","RC","TFDL","EDC","EDT","TI","BI","TRB","EN","IH","OL","CD","GL","HP","YA","KA","PP","RU","CDC","WS","VC","VC","CR","15BI","15PF","EDT","AU","15TFDL","EN","AD","PF","MT","MB","CH","RT","KNA","MSC","MH","CCIT","ICT","ES","SB","SS","SA","MS","TFDL2"];
 
 let isUsingTable = false;
-let isUsingPlayArea = true;
+let isUsingPlayArea = false;
 
 const tableSettings = {
     zoom: 15.879236564204465,
@@ -46,18 +46,40 @@ document.addEventListener('keydown', function(event) {
     }
 
 
-    // if (event.key == 'ArrowUp') {
-    //     let zoom = map.getZoom();
-    //     map.jumpTo({'zoom': zoom += 0.025 });
-    // }
+    if (event.code == 'Space') {
+        let bid = '';
+        if (stepIndex == 0 || stepIndex == 5) {
+            bid = 'BI';
+        }
 
-    // if (event.key == 'ArrowDown') {
-    //     let zoom = map.getZoom();
-    //     map.jumpTo({'zoom': zoom -= 0.025 });
-    // }
+        if (stepIndex == 1 || stepIndex == 4) {
+            bid = 'SA';
+        }
+
+        if (stepIndex == 2 || stepIndex == 3) {
+            bid = 'MH';
+            // stepIndex = -1;
+        }
 
 
+        selectBuilding(bid);
+
+        if (selectedBuildings.length > 0) {
+            selectedPaths = pathData.features
+            .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid))) 
+            .map(p => p.properties.id);
+        } else {
+            selectedPaths = [];
+        }
+         
+        map.setFilter("paths-layer", ['in', 'id', ...selectedPaths]);
+
+        stepIndex++;
+    }
 });
+
+let stepIndex = 0;
+
 
 
 const pauseButton = document.getElementById('pause');
@@ -74,7 +96,7 @@ let speedFactor = 3000; // number of frames per longitude degree
 let animation; // to store and cancel the animation
 let startTime = 0;
 let progress = 0; // progress = timestamp - startTime
-const timePerPath = 10;
+const timePerPath = 1;
 let resetTime = false; // indicator of whether time reset is needed for the animation
 
 let selectedBuildings = [];
@@ -82,6 +104,7 @@ let selectedPaths = [];
 
 let currentHour = 0;
 
+// https://docs.mapbox.com/mapbox-gl-js/example/animate-a-line/
 function animateLine(timestamp) {
     progress = timestamp - startTime;
 
@@ -97,7 +120,7 @@ function animateLine(timestamp) {
         if (currentPathIndex < paths.length - 1) {
             currentPathIndex++;
             pathData.features.push(paths[currentPathIndex]);
-            map.getSource('paths_layer').setData(pathData);
+            map.getSource('paths-layer').setData(pathData);
         } else {
             pathData.features = [];
             currentPathIndex = 0;
@@ -106,37 +129,27 @@ function animateLine(timestamp) {
         isDrawing = false;
     }
     
-    // // // restart if it finishes a loop
-    // if (progress > speedFactor * 1) {
-    //     // console.log('restart');
-    //     startTime = timestamp;
-    //     // pathData.features[0].geometry.coordinates = [];
-    // } else {
-    //         // console.log('now');
-    //         
-    //     }
-        
-    // // append new coordinates to the lineString
-        
-    // // then update the map
-    //     
-    // }
-    // Request the next frame of the animation.
     animation = requestAnimationFrame(animateLine);
+}
+
+function getPathsForCurrentHour() {
+    return pathData.features
+    .filter(p => {
+        const pathHour = parseInt(p.properties.startTime.slice(0,2));
+        return pathHour == currentHour;
+    })
+    .map(p => p.properties.id);
 }
 
 function updateTime(hour) {
     currentHour = hour;
-    const pathIds = pathData.features
-            .filter(p => {
-                const pathHour = parseInt(p.properties.startTime.slice(0,2));
-                return pathHour == hour;
-            })
-            .map(p => p.properties.id);
+ 
+    const pathsForHour = getPathsForCurrentHour();
+    selectedPaths = selectedPaths.filter(sp => !pathsForHour.includes(sp));
             
 
-    map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
-    map.setFilter("paths-highlighted", ['in', 'id', '']);
+    map.setFilter("paths-layer", ['in', 'id', ...selectedPaths]);
+    // map.setFilter("paths-highlighted", ['in', 'id', '']);
     
     let date = new Date();
     date.setHours(hour);
@@ -157,19 +170,6 @@ function registerEventListeners() {
     // });
 
     slider.addEventListener('input', e => updateTime(parseInt(e.target.value)));
-    document.addEventListener('wheel', ev => {
-        const knob1 = knobs[1];
-       
-        if (ev.deltaY < 0 && currentHour < 23) {    
-            currentHour++;
-        }
-        else if (ev.deltaY > 0 && currentHour > 0)  {
-            currentHour--;
-        }
-        updateTime(currentHour);
-        slider.value = currentHour;
-        knob1.style.transform = `rotate(${currentHour*15}deg)`
-    })
 }
         
 
@@ -286,9 +286,9 @@ function selectBuilding(bid) {
 function beginAnimate() {
     startTime = performance.now();
     pathData.features = [];
-    map.getSource('paths_layer').setData(pathData);
+    // map.getSource('paths_layer').setData(pathData);
     animateLine();
-   animation = requestAnimationFrame(animateLine);
+    animation = requestAnimationFrame(animateLine);
 }
 
 function addCompassDirection() {
@@ -333,46 +333,46 @@ function addCompassDirection() {
 }
 
 
-function drawPlayarea() {
-    const svg = d3.select("#play-area"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
+// function drawPlayarea() {
+//     const svg = d3.select("#play-area"),
+//     width = +svg.attr("width"),
+//     height = +svg.attr("height");
     
-    const buildings = [{
-        id:'MH',
-        w: 183, 
-        h: 133,
-        r: 140,
-    }, {
-        id:'MFH',
-        w: 123,
-        h: 98,
-        r: 80
-    }];
+//     const buildings = [{
+//         id:'MH',
+//         w: 183, 
+//         h: 133,
+//         r: 140,
+//     }, {
+//         id:'MFH',
+//         w: 123,
+//         h: 98,
+//         r: 80
+//     }];
 
-    const xOffset = width * 0.3;
-    const paddingY = 300;
-    const yOffset = 100;
+//     const xOffset = width * 0.3;
+//     const paddingY = 300;
+//     const yOffset = 100;
 
-    var builds = svg
-    .selectAll(".building")
-    .data(buildings)
-    .attr('class', 'loaded')
-    .attr('style', (d, i) => `transform:translate(${xOffset}px, ${yOffset + (paddingY * i)}px); transform-origin:center;`)
+//     var builds = svg
+//     .selectAll(".building")
+//     .data(buildings)
+//     .attr('class', 'loaded')
+//     .attr('style', (d, i) => `transform:translate(${xOffset}px, ${yOffset + (paddingY * i)}px); transform-origin:center;`)
 
-    const radius = 100;
+//     const radius = 100;
 
-    const approxWidth = 183;
-    const approxHeight = 133;
+//     const approxWidth = 183;
+//     const approxHeight = 133;
 
-    var circ = svg
-    .selectAll(".shadow")
-    .data(buildings)
-    .enter().append('circle')
-    .attr('r', d => d.r)
-    .attr('class', 'shadow')
-    .attr('style', (d, i) => `transform:translate(${xOffset + d.w/2}px, ${yOffset + (paddingY * i) + d.h/2}px); transform-origin:center;`)
-}
+//     var circ = svg
+//     .selectAll(".shadow")
+//     .data(buildings)
+//     .enter().append('circle')
+//     .attr('r', d => d.r)
+//     .attr('class', 'shadow')
+//     .attr('style', (d, i) => `transform:translate(${xOffset + d.w/2}px, ${yOffset + (paddingY * i) + d.h/2}px); transform-origin:center;`)
+// }
 
 
 
@@ -384,14 +384,21 @@ function run(data) {
 
     addBuildingLayer(buildingData);
 
-    selectedBuildings = allBuildings;
-    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+    // selectedBuildings = allBuildings;
+    // map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 
     addPathLayer(pathData);
+    map.setFilter("paths-layer", ['in', 'id', '']);
 
+    // beginAnimate();
+
+    registerClick();
     registerEventListeners();
-    drawPlayarea();
+    // drawPlayarea();
 
+}
+
+function registerClick() {
     map.on('click', ev => {
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
         
@@ -400,16 +407,15 @@ function run(data) {
             
             selectBuilding(bid);
 
-            const pathIds = pathData.features
-                .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) 
+            selectedPaths = pathData.features
+                .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid))) 
                 .map(p => p.properties.id);
 
-            map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
+            
+
+            map.setFilter("paths-layer", ['in', 'id', ...selectedPaths]);
         }
     });
 }
 
 
-
-// 1. All lines on, with all ids. Remove all those not in selected buildings
-// Export buildings as normal SVGs
