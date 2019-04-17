@@ -16,8 +16,8 @@ const playareaSettings = {
 
 const map = new mapboxgl.Map({
     style: 'mapbox://styles/mkurapov/cjtp3qjvh8bcf1foc9kfzj9ep',
-    center: isUsingPlayArea ? playareaSettings.center : [-114.1313808,  51.0774501],
-    zoom: isUsingPlayArea ? playareaSettings.zoom : 15.5,
+    center: tableSettings.center,
+    zoom: tableSettings.zoom,
     container: 'map'
 });
 
