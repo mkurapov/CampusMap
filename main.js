@@ -49,16 +49,20 @@ document.addEventListener('keydown', function(event) {
     if (event.code == 'Space') {
         let bid = '';
         if (stepIndex == 0 || stepIndex == 5) {
-            bid = 'BI';
+            bid = 'MH';
         }
 
         if (stepIndex == 1 || stepIndex == 4) {
-            bid = 'SA';
+            bid = 'KNA';
         }
 
         if (stepIndex == 2 || stepIndex == 3) {
-            bid = 'MH';
-            // stepIndex = -1;
+            bid = 'SA';
+            
+        }
+
+        if (stepIndex == 5) {
+            stepIndex = -1;
         }
 
 
@@ -66,7 +70,7 @@ document.addEventListener('keydown', function(event) {
 
         if (selectedBuildings.length > 0) {
             selectedPaths = pathData.features
-            .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid))) 
+            .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) 
             .map(p => p.properties.id);
         } else {
             selectedPaths = [];
@@ -384,16 +388,16 @@ function run(data) {
 
     addBuildingLayer(buildingData);
 
-    // selectedBuildings = allBuildings;
-    // map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+    selectedBuildings = allBuildings;
+    map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 
     addPathLayer(pathData);
     map.setFilter("paths-layer", ['in', 'id', '']);
 
     // beginAnimate();
 
-    registerClick();
-    registerEventListeners();
+    // registerClick();
+    // registerEventListeners();
     // drawPlayarea();
 
 }
