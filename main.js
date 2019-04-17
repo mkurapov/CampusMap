@@ -27,6 +27,41 @@ map.on('load', () => {
         d3.json('/data/buildings.json')]).then(data => run(data))
 });
 
+function next() {
+    let bid = '';
+    if (stepIndex == 0 || stepIndex == 5) {
+        bid = 'MH';
+    }
+
+    if (stepIndex == 1 || stepIndex == 4) {
+        bid = 'KNA';
+    }
+
+    if (stepIndex == 2 || stepIndex == 3) {
+        bid = 'SA';
+        
+    }
+
+    if (stepIndex == 5) {
+        stepIndex = -1;
+    }
+
+
+    selectBuilding(bid);
+
+    if (selectedBuildings.length > 0) {
+        selectedPaths = pathData.features
+        .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) 
+        .map(p => p.properties.id);
+    } else {
+        selectedPaths = [];
+    }
+     
+    map.setFilter("paths-layer", ['in', 'id', ...selectedPaths]);
+
+    stepIndex++;
+}
+
 document.addEventListener('keydown', function(event) {
     if (event.key == '1') {
         console.log(map.getCenter())
@@ -47,38 +82,7 @@ document.addEventListener('keydown', function(event) {
 
 
     if (event.code == 'Space') {
-        let bid = '';
-        if (stepIndex == 0 || stepIndex == 5) {
-            bid = 'MH';
-        }
-
-        if (stepIndex == 1 || stepIndex == 4) {
-            bid = 'KNA';
-        }
-
-        if (stepIndex == 2 || stepIndex == 3) {
-            bid = 'SA';
-            
-        }
-
-        if (stepIndex == 5) {
-            stepIndex = -1;
-        }
-
-
-        selectBuilding(bid);
-
-        if (selectedBuildings.length > 0) {
-            selectedPaths = pathData.features
-            .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) 
-            .map(p => p.properties.id);
-        } else {
-            selectedPaths = [];
-        }
-         
-        map.setFilter("paths-layer", ['in', 'id', ...selectedPaths]);
-
-        stepIndex++;
+        next();
     }
 });
 
@@ -396,7 +400,7 @@ function run(data) {
 
     // beginAnimate();
 
-    // registerClick();
+    registerClick();
     // registerEventListeners();
     // drawPlayarea();
 
@@ -408,6 +412,7 @@ function registerClick() {
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
+            console.log(bid);
             
             selectBuilding(bid);
 
