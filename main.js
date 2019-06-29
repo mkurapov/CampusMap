@@ -1,23 +1,10 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoibWt1cmFwb3YiLCJhIjoiY2p0aGo5NW0yMGZnaDN5cGY4NWVoeGt5ZiJ9.IdfRD2MhG562b2oct7daNw';
-const allBuildings = ["GS","MF","GR","OO","TRA","SH","KNB","MFH","CC","ST","EN","EEEL","AB","DC","RC","TFDL","EDC","EDT","TI","BI","TRB","EN","IH","OL","CD","GL","HP","YA","KA","PP","RU","CDC","WS","VC","VC","CR","15BI","15PF","EDT","AU","15TFDL","EN","AD","PF","MT","MB","CH","RT","KNA","MSC","MH","CCIT","ICT","ES","SB","SS","SA","MS","TFDL2"];
-
-let isUsingTable = false;
-let isUsingPlayArea = true;
-
-const tableSettings = {
-    zoom: 15.879236564204465,
-    center: [-114.1265761273005, 51.07719623624649]
-}
-
-const playareaSettings = {
-    zoom: 15.5,
-    center: [-114.12703253970648, 51.077833820801914]
-}
+const allBuildings = ["GS","MF","OO","TRA","SH","KNB","MFH","CC","ST","EN","EEEL","AB","DC","RC","TFDL","EDC","EDT","TI","BI","TRB","EN","IH","OL","CD","GL","HP","YA","KA","PP","RU","CDC","WS","VC","VC","CR","15BI","15PF","EDT","AU","15TFDL","EN","AD","PF","MT","MB","CH","RT","KNA","MSC","MH","CCIT","ICT","ES","SB","SS","SA","MS","TFDL2"];
 
 const map = new mapboxgl.Map({
     style: 'mapbox://styles/mkurapov/cjtp3qjvh8bcf1foc9kfzj9ep',
-    center: isUsingPlayArea ? playareaSettings.center : [-114.1313808,  51.0774501],
-    zoom: isUsingPlayArea ? playareaSettings.zoom : 15.5,
+    center: [-114.13068262984046, 51.07796392436677],
+    zoom: 15.45,
     container: 'map'
 });
 
@@ -29,34 +16,13 @@ map.on('load', () => {
 
 document.addEventListener('keydown', function(event) {
     if (event.key == '1') {
-        console.log(map.getCenter())
-        selectedBuildings = selectedPaths = [];
-        map.setFilter("buildings-highlighted", ['in', 'id', ...selectedBuildings]);
-        map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
-    }
-
-    if (event.key == 'ArrowUp') {
-        let zoom = map.getZoom();
-        map.jumpTo({'zoom': zoom += 0.025 });
-    }
-
-    if (event.key == 'ArrowDown') {
-        let zoom = map.getZoom();
-        map.jumpTo({'zoom': zoom -= 0.025 });
-    }
-
-
-    // if (event.key == 'ArrowUp') {
-    //     let zoom = map.getZoom();
-    //     map.jumpTo({'zoom': zoom += 0.025 });
-    // }
-
-    // if (event.key == 'ArrowDown') {
-    //     let zoom = map.getZoom();
-    //     map.jumpTo({'zoom': zoom -= 0.025 });
-    // }
-
-
+        // console.log(map.getCenter())
+        // selectedBuildings = selectedPaths = [];
+        // map.setFilter("buildings-highlighted", ['in', 'id', ...selectedBuildings]);
+        // map.setFilter("paths-highlighted", ['in', 'id', ...selectedPaths]);
+        console.log(map.getZoom());
+        console.log(map.getCenter());
+    }    
 });
 
 
@@ -97,7 +63,7 @@ function animateLine(timestamp) {
         if (currentPathIndex < paths.length - 1) {
             currentPathIndex++;
             pathData.features.push(paths[currentPathIndex]);
-            map.getSource('paths_layer').setData(pathData);
+            map.getSource('paths-layer').setData(pathData);
         } else {
             pathData.features = [];
             currentPathIndex = 0;
@@ -136,7 +102,6 @@ function updateTime(hour) {
             
 
     map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
-    map.setFilter("paths-highlighted", ['in', 'id', '']);
     
     let date = new Date();
     date.setHours(hour);
@@ -146,30 +111,17 @@ function updateTime(hour) {
 
 function registerEventListeners() {
 
-    // pauseButton.addEventListener('click', () => {
-    //     pauseButton.classList.toggle('pause');
-    //     if (pauseButton.classList.contains('pause')) {
-    //         cancelAnimationFrame(animation);
-    //     } else {
-    //         resetTime = true;
-    //         animateLine();
-    //     }
-    // });
+    pauseButton.addEventListener('click', () => {
+        pauseButton.classList.toggle('pause');
+        if (pauseButton.classList.contains('pause')) {
+            cancelAnimationFrame(animation);
+        } else {
+            resetTime = true;
+            animateLine();
+        }
+    });
 
     slider.addEventListener('input', e => updateTime(parseInt(e.target.value)));
-    document.addEventListener('wheel', ev => {
-        const knob1 = knobs[1];
-       
-        if (ev.deltaY < 0 && currentHour < 23) {    
-            currentHour++;
-        }
-        else if (ev.deltaY > 0 && currentHour > 0)  {
-            currentHour--;
-        }
-        updateTime(currentHour);
-        slider.value = currentHour;
-        knob1.style.transform = `rotate(${currentHour*15}deg)`
-    })
 }
         
 
@@ -188,7 +140,6 @@ function getPathsForBuilding(bid) {
 }
 
 function addPathLayer(data) {
-
     const lineColor = [
         'match',
         ['get', 'bearingName'],
@@ -203,7 +154,6 @@ function addPathLayer(data) {
         /* other */ '#ccc'
     ];
 
-
     map.addLayer({
         "id": "paths-layer",
         "type": "line",
@@ -217,27 +167,10 @@ function addPathLayer(data) {
             'line-opacity': 0.1
         }
     });
-
-    map.addLayer({
-        "id": "paths-highlighted",
-        "type": "line",
-        "source": {
-            "type": "geojson",
-            "data": data
-        },
-        "filter": ["in", "id", ""],
-        'paint': {
-            'line-color': '#ed6498',
-            'line-width': 1,
-            'line-opacity': 1
-        }
-    });
 }
 
 
 function addBuildingLayer(data) {
-
-
     map.addLayer({
         "id": "buildings-layer",
         "type": "fill",
@@ -318,28 +251,14 @@ function addCompassDirection() {
             coordIndex = coordIndex + 8
         };
 
-        // p['bearing'] = {
-        //     value: bearing,
-        //     name: coordNames[coordIndex]
-        // };
-
         p.properties['bearingName'] = coordNames[coordIndex];
-        // console.log(p);
-        // console.log(p.bearing)
-
-//         var y = Math.sin(dLon) * Math.cos(lat2);
-// var x = Math.cos(lat1)*Math.sin(lat2) -
-//         Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-// var brng = Math.atan2(y, x).toDeg();
-
-        // console.log(p);
     })
 }
 
 
 function run(data) {
     pathData = data[0];
-    // pathData.features = pathData.features.sort(() => 0.5 - Math.random()).filter((d, i) => i < 300); 
+    // pathData.features = []
     buildingData = data[1];
     addCompassDirection();
 
@@ -347,12 +266,14 @@ function run(data) {
 
     addBuildingLayer(buildingData);
 
-    selectedBuildings = allBuildings;
+    // selectedBuildings = allBuildings;
     map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
+
+    pathData.features = []
 
     addPathLayer(pathData);
     registerEventListeners();
-    //beginAnimate();
+    beginAnimate();
     map.on('click', ev => {
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
@@ -363,15 +284,8 @@ function run(data) {
         
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
-            // if (bid == 'OO') {
-            //     knobs[0].style.display = 'block';
-            // }
-
-            // if (bid == 'MH') {
-            //     knobs[1].style.display = 'block';
-            // }
-            // console.log(bid);
             selectBuilding(bid);
+            console.log(bid);
 
             const pathIds = pathData.features
                 .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
