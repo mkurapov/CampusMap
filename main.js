@@ -36,7 +36,7 @@ let buildingData;
 let paths;
 let currentPathIndex = 0;
 
-let speedFactor = 3000; // number of frames per longitude degree
+let speedFactor = 1000; // number of frames per longitude degree
 let animation; // to store and cancel the animation
 let startTime = 0;
 let progress = 0; // progress = timestamp - startTime
@@ -46,7 +46,7 @@ let resetTime = false; // indicator of whether time reset is needed for the anim
 let selectedBuildings = [];
 let selectedPaths = [];
 
-let currentHour = 0;
+let currentHour = 12;
 
 function animateLine(timestamp) {
     progress = timestamp - startTime;
@@ -60,38 +60,15 @@ function animateLine(timestamp) {
     }
 
     if (isDrawing) {
-        if (currentPathIndex < paths.length - 1) {
-            currentPathIndex++;
-            pathData.features.push(paths[currentPathIndex]);
-            map.getSource('paths-layer').setData(pathData);
-        } else {
-            pathData.features = [];
-            currentPathIndex = 0;
-        }
-
+        updateTime(currentHour++);
         isDrawing = false;
     }
     
-    // // // restart if it finishes a loop
-    // if (progress > speedFactor * 1) {
-    //     // console.log('restart');
-    //     startTime = timestamp;
-    //     // pathData.features[0].geometry.coordinates = [];
-    // } else {
-    //         // console.log('now');
-    //         
-    //     }
-        
-    // // append new coordinates to the lineString
-        
-    // // then update the map
-    //     
-    // }
-    // Request the next frame of the animation.
     animation = requestAnimationFrame(animateLine);
 }
 
 function updateTime(hour) {
+    // console.log(paths);
     currentHour = hour;
     const pathIds = pathData.features
             .filter(p => {
@@ -114,6 +91,7 @@ function registerEventListeners() {
     pauseButton.addEventListener('click', () => {
         pauseButton.classList.toggle('pause');
         if (pauseButton.classList.contains('pause')) {
+            console.log('run');
             cancelAnimationFrame(animation);
         } else {
             resetTime = true;
@@ -222,8 +200,9 @@ function deselectBuilding(bid) {
 
 function beginAnimate() {
     startTime = performance.now();
-    pathData.features = [];
-    map.getSource('paths_layer').setData(pathData);
+    // pathData.features = [];
+    // console.log(map.getSource('paths-'))
+    // map.getSource('paths_layer').setData(pathData);
     animateLine();
    animation = requestAnimationFrame(animateLine);
 }
@@ -255,53 +234,39 @@ function addCompassDirection() {
     })
 }
 
-
 function run(data) {
     pathData = data[0];
-    // pathData.features = []
     buildingData = data[1];
     addCompassDirection();
-
     paths = pathData.features;
-
     addBuildingLayer(buildingData);
 
     // selectedBuildings = allBuildings;
     map.setFilter("buildings-highlighted", ['in', 'Building_n', ...selectedBuildings]);
 
-    pathData.features = []
+    // pathData.features = []
 
     addPathLayer(pathData);
-    registerEventListeners();
-    beginAnimate();
+    map.setFilter("paths-layer", ['in', 'id', '']); // remove lines initially
+    // registerEventListeners();
     map.on('click', ev => {
         // can also just do an intersection of layres instead of storing bid's
         const clickedBuilds = map.queryRenderedFeatures(ev.point, { layers: ['buildings-layer'] });
 
-         
         // const visiblePathIds = map.queryRenderedFeatures({layers: ['paths-layer']}).map(p => p.properties.id);
 
-        
+    
         if (clickedBuilds.length > 0) {
             const bid = clickedBuilds[0].properties.Building_n;
             selectBuilding(bid);
             console.log(bid);
 
             const pathIds = pathData.features
-                .filter(p => !selectedBuildings.some(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
+                .filter(p => selectedBuildings.every(bid => p.properties.bids.includes(bid))) // !some is for uncover and will all buildings
                 // .filter(p => visiblePathIds.includes(p.properties.id)) // only highlight visible paths
                 .map(p => p.properties.id);
 
             map.setFilter("paths-layer", ['in', 'id', ...pathIds]);
         }
-        
-        if (selectedBuildings.length >= 2) {
-        }
-
     });
 }
-
-
-
-// 1. All lines on, with all ids. Remove all those not in selected buildings
-// Export buildings as normal SVGs

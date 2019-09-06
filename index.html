@@ -10,133 +10,36 @@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js'></script>
 
     <style>
-        body { margin:0; padding:0; }
+        @import url('https://fonts.googleapis.com/css?family=Montserrat:500,700&display=swap');
+        body { margin:0; padding:0; font-family: Montserrat, Helvetica, Arial; }
         #map { position:absolute; top:0; bottom:0; width:100%; }
-        #pause::after {content: 'Pause'; }
-        #pause.pause::after { content: 'Play'; }
-        button {
+
+        .info {
             position: absolute;
-            margin: 20px;
+            top: 20px;
+            left: 20px;
+            font-size: 13px;
+            width: 250px;
+            color: white;
         }
 
-        .session { 
-            /* background-color: darkslategray; */
-            border-radius: 30px;
-            position: absolute;
-            z-index: 99;
-            bottom: 30px;
-            width:90%;
-            margin: 0 auto;
-            left: 0;
-            right: 0;
-            /* padding: 20px 15px; */
-        }
-
-        #slider {
-            width: 100%;
-            margin: 0 auto;
-            position: relative;
-            display: block;
-        }
-
-        input[type=range] {
-            -webkit-appearance: none;
-            background: none;
-            outline: none;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            /* border: 1px solid #000000; */
-            height: 50px;
-            width: 16px;
-            /* border-radius: 3px; */
-            background: #ffffff;
-            cursor: pointer;
-            -webkit-appearance: none;
-        }
-
-              input[type=range]::-webkit-slider-thumb {
-        /* box-shadow: white; */
-        /* border: 2px solid #83E584; */
-            height: 20px;
-            width: 20px;
-            border-radius: 23px;
-            background: #eeeeee;
-            cursor: pointer;
-            -webkit-appearance: none;
-            margin-top: -3px;
-        }
-
-
-        input[type=range]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 14px;
-  cursor: pointer;
-  background: #50555C;
-  border-radius: 14px;
-  border: 0px solid #000000;
-}
-
-        #time {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 113px;
-    margin: 0 0 10px 0px;
-    text-align: right;
-    color: rgba(255,255,255,0.3);
-        }
-
-        #play-area {
-            position: absolute;
-            padding: 30px 0;
-            width: 500px;
-            height: calc(70vh - 60px);
-            z-index: 99;
-            right: 5vw;
-            top: 9vh;
-            background: rgba(0,0,0,0.8);
-            border-radius: 20px;
-            display: flex;
-            border: 3px solid rgba(255,255,255,0.3);
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .svg-container {
-            text-align: center;
-            height: 260px;
-            width: 260px;
-            /* border: 3px solid #62B6CB; */
-            border-radius: 50%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: rotate(0deg);
-            transform-origin: center;
-            transition: transform 0.3s ease;
-            /* display: none; */
-
-        }
-
-        .svg-container svg {
-            transform: scale(0.6);
-            fill: #62B6CB !important;
-            stroke: none !important;
-            transform: rotate(0deg);
-            transform-origin: center;
-            transition: transform 0.3s ease;
+        a {
+            color: inherit;
         }
     
     </style>
 </head>
 <body>
 
-<div class='session' id='sliderbar'>
-<h1 id="time">00:00</h1>
-  <input id='slider' class='row' type='range' min='0' max='23' step='1' value='0' />
-</div>
 <div id='map'></div>
-<button id='pause'></button>
+<div class="info">
+    This visualization was part of a <a href="/files/making-sense-of-spatial-data.pdf">larger research project</a>.
+
+    This map visualizes 20,000 student movement pathss on the University of Calgary campus.
+    <br/>
+    <br/>
+    <b>Select buildings to see how students move through them.</b>
+</div>
 <script src='main.js'></script>
 </body>
 </html>
